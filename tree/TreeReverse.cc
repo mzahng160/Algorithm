@@ -275,15 +275,20 @@ void levelOrderTraveral(BiTree pRoot)
 	}	
 }
 
-ElemType GetMinNode(BiTree pRoot)
+BiTree GetMinNode(BiTree pRoot)
 {
-	if (pRoot)
+	if (pRoot != NULL)
 	{
 		while (pRoot&&pRoot->lchild != NULL)
 		{
 			pRoot = pRoot->lchild;
+			cout << "GetMinNode " << pRoot->data << endl;
 		}
-		return pRoot->data;
+		return pRoot;
+	}
+	else
+	{
+		return NULL;
 	}
 }
 
@@ -315,7 +320,11 @@ void removeNode(BiTree& pRoot, ElemType key)
 {
 	
 	if (pRoot == NULL)
+	{
+		cout << "cannot find " << key << endl;
 		return;
+	}
+		
 	if (key < pRoot->data)
 	{
 		removeNode(pRoot->lchild, key);
@@ -341,7 +350,12 @@ void removeNode(BiTree& pRoot, ElemType key)
 			pRoot = pRoot->lchild;
 		}
 
-		pRoot->data = GetMinNode(pRoot);
+		BiTree tmp = GetMinNode(pRoot->rchild);
+		if (tmp != NULL)
+		{
+			pRoot->data = tmp->data;
+			cout << "min " << pRoot->data << endl;
+		}
 
 		removeNode(pRoot->rchild, pRoot->data);
 	}
@@ -463,7 +477,7 @@ int main()
 
 	/******************************/
 	cout << "min data" << endl;
-	cout << GetMinNode(tree) << endl;
+	cout << GetMinNode(tree)->data << endl;
 
 	cout << "max data" << endl;
 	cout << GetMaxNode(tree) << endl;
@@ -475,7 +489,7 @@ int main()
 
 	/******************************/
 	cout << "delete" << endl;
-	removeNode(tree, a[5]);
+	removeNode(tree, a[0]);
 	levelOrderTraveral(tree);	
 	cout << endl;
 
