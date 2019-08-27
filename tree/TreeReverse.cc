@@ -11,6 +11,11 @@ typedef struct _BiTNode
 {
 	ElemType data;
 	struct _BiTNode *lchild, *rchild;
+
+	~_BiTNode()
+	{
+		cout << "~_BiTNode() "<< endl;
+	}
 }BiTNode, *BiTree;
 
 typedef struct _Node
@@ -279,11 +284,9 @@ BiTree GetMinNode(BiTree pRoot)
 {
 	if (pRoot != NULL)
 	{
-		while (pRoot&&pRoot->lchild != NULL)
-		{
+		while (pRoot&&pRoot->lchild != NULL)		
 			pRoot = pRoot->lchild;
-			cout << "GetMinNode " << pRoot->data << endl;
-		}
+		
 		return pRoot;
 	}
 	else
@@ -328,36 +331,46 @@ void removeNode(BiTree& pRoot, ElemType key)
 	if (key < pRoot->data)
 	{
 		removeNode(pRoot->lchild, key);
+		return;
 	}
 	else if (key > pRoot->data)
 	{
 		removeNode(pRoot->rchild, key);
+		return;
 	}
 	else 
 	{
 		if (pRoot->rchild == NULL && pRoot->lchild == NULL)
 		{
 			cout << "****"<< pRoot->data << endl;
-			pRoot = NULL;
+			delete pRoot;
 			return;
 		}
 		else if (pRoot->lchild == NULL)
-		{			
+		{
+			BiTree tmp = pRoot;
 			pRoot = pRoot->rchild;
+
+			delete tmp;
+			return;
 		}
 		else if (pRoot->rchild == NULL)
 		{
+			BiTree tmp = pRoot;
 			pRoot = pRoot->lchild;
+			delete tmp;
+			return;
 		}
 
 		BiTree tmp = GetMinNode(pRoot->rchild);
 		if (tmp != NULL)
 		{
 			pRoot->data = tmp->data;
-			cout << "min " << pRoot->data << endl;
+			//cout << "min " << pRoot->data << endl;
 		}
 
 		removeNode(pRoot->rchild, pRoot->data);
+		return;
 	}
 }
 
@@ -409,7 +422,7 @@ void CreateOrderBinaryTree(BiTree& tree, int* a, int len)
 {
 	for (int i = 0; i < len; i++)
 	{
-		BiTree s = (BiTree)malloc(sizeof(BiTNode));
+		BiTree s = new BiTNode;//(BiTree)malloc(sizeof(BiTNode));
 		s->data = a[i];
 		s->lchild = NULL;
 		s->rchild = NULL;
@@ -418,10 +431,53 @@ void CreateOrderBinaryTree(BiTree& tree, int* a, int len)
 	}
 }
 
+string SerialByPre(BiTree pRoot)
+{
+	if (pRoot == NULL)
+		return "#!";
+	string res = to_string(pRoot->data) + "!";
+
+	res += SerialByPre(pRoot->lchild);
+	res += SerialByPre(pRoot->rchild);
+	return res;
+}
+
+BiTree reconByPreString(string preStr, vector<string>& strVec)
+{	
+	string::size_type PrePos = 0;
+	string::size_type LastPos = preStr.find_first_of("!");
+	while (string::npos != LastPos)
+	{
+		strVec.push_back(preStr.substr(PrePos, LastPos- PrePos));
+		preStr[LastPos] = '*';		
+		PrePos = LastPos;
+		++PrePos;
+
+		LastPos = preStr.find_first_of("!");
+	}	
+}
+
+BiTree reconPreOrder(vector<string>& strVec)
+{
+
+	string tmp = strVec.front();
+	strVec.erase(strVec.begin());
+
+	if (tmp.compare("#") == 0)
+		return NULL;
+
+	BiTree head = new BiTNode;
+	head->data = atoi(tmp.c_str());
+	head->lchild = reconPreOrder(strVec);
+	head->rchild = reconPreOrder(strVec);
+
+	return head;
+}
+
 int main()
 {
 
-	cout << sizeof(long) << " " << sizeof(int) << " " << sizeof(char) << " " << sizeof(double) << " " << sizeof(float) << endl;
+	//cout << sizeof(long) << " " << sizeof(int) << " " << sizeof(char) << " " << sizeof(double) << " " << sizeof(float) << endl;
 	
 	//int a[] = { 62, 88, 58, 47, 35, 73, 51, 99, 37, 93, 23, 27, 45, 21, 12 };
 	//int a[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'M' };
@@ -488,10 +544,21 @@ int main()
 
 
 	/******************************/
+#if 0
 	cout << "delete" << endl;
 	removeNode(tree, a[0]);
 	levelOrderTraveral(tree);	
 	cout << endl;
-
+#endif
 	printTree_2(tree);
+
+	/***************************/
+	string preStr =  SerialByPre(tree);
+	cout << preStr << endl;
+
+	vector<string> strVec;
+	reconByPreString(preStr, strVec);
+
+	BiTree head = reconPreOrder(strVec);
+	printTree_2(head);
 }
