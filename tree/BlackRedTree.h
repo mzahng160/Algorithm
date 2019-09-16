@@ -56,6 +56,9 @@ private:
 
 	void printInOrder(Node* p, int height, string to, int len);
 	string getSpace(int num);
+
+	Node* case1_adjust(Node* p);
+	Node* case2_adjust(Node* p, unbalance_type t);
 };
 
 void BlackRedTree::insert(int key)
@@ -90,8 +93,8 @@ Node* BlackRedTree::insertReal(int key, Node* pRoot)
 		pre->right = tmp;	
 	tmp->parent = pre;
 
-	return pRoot;
-	//return adjustColor(tmp);
+	//return pRoot;
+	return adjustColor(tmp);
 }
 
 Node* BlackRedTree::ll_rotate(Node* p)
@@ -129,56 +132,151 @@ Node* BlackRedTree::rl_rotate(Node* p)
 	return rr_rotate(p);
 }
 
-Node* BlackRedTree::adjustColor(Node* p)
+Node* BlackRedTree::case1_adjust(Node* p)
 {
-	Node* parent =  nullptr;
+	Node* parent = p->parent;
+	Node* grand = parent->parent;
+	Node* uncle = grand->left == parent ? grand->right:grand->left;
 
-	while ((parent = p->parent) != nullptr && parent->color == RED)
+	grand->color = RED;
+	uncle->color = BLACK;
+	parent->color = BLACK;
+
+	return grand;
+}
+Node* BlackRedTree::case2_adjust(Node* p, unbalance_type t)
+{
+	Node* big;
+	Node* middle;
+	Node* small;
+
+	switch (t)
 	{
-		Node* parentBrother = nullptr;
-
-		if (parent->parent->left == parent)
-			parentBrother = parent->parent->right;
-		else
-			parentBrother = parent->parent->left;
-
-		if (parentBrother && parentBrother->color == RED)
+		case TYPE_LL:
 		{
-			parent->color = BLACK;
-			parentBrother->color = BLACK;
-			parent->parent->color = RED;
-			p = parent->parent;			
-			continue;
+			big = p;
+			middle = big->left;
+			small = middle->left;
+
+			big->left = middle->right;
+			if (nullptr != middle->right)
+				middle->right->parent = big;
+			middle->right = big;
+
+			break;
 		}
 
-		if (parentBrother && parentBrother->color == BLACK)
+		case TYPE_LR:
 		{
-			//same side
-			if(p == parent->left && parent->parent->left == parent)
-			{
-				parent->color = BLACK;
-				parent->parent->color = RED;
-				ll_rotate(parent->parent);
-			}
-			else if (p == parent->right && parent->parent->right == parent)
-			{
-				parent->color = BLACK;
-				parent->parent->color = RED;
-				rr_rotate(parent->parent);
-			}
+			big = p;
+			small = big->left;
+			middle = small->right;
 
-			//different side
-			if (p == parent->left && parent->parent->right == parent)
+			middle->right = small->left;
+			big->left = middle->right;
+			if (nullptr != middle->left)
+				middle->left->parent = small;
+			if (nullptr != middle->left)
+				middle->right->parent = big;
+			
+			middle->left = small;
+			middle->right = big;
+			break;
+		}
+		case TYPE_RL:
+		{
+			small = p;
+			big = small->right;
+			middle = big->left;
+
+			big->left = middle->right;
+			small->right = middle->left;
+
+			if (nullptr != middle->left)
+				middle->left->parent = small;
+			if (nullptr != middle->left)
+				middle->right->parent = big;
+
+			middle->left = small;
+			middle->right = big;
+			break;
+		}
+		case TYPE_RR:
+		{
+			big = p;
+			middle = big->right;
+			small = middle->right;
+
+			big->right = middle->left;
+			if (nullptr != middle->left)
+				middle->left->parent = big;
+			middle->left = big;
+			break;
+		}
+		default:
+			break;
+	}	
+
+	if (p->parent == nullptr)
+		pRoot = middle;
+	else if (p->parent->left == p)
+		p->parent->left = middle;
+	else if (p->parent->right = p)
+		p->parent->right = middle;
+
+	if (p->parent != nullptr)
+		middle->parent = p->parent;
+
+	big->parent = middle;
+	small->parent = middle;
+
+	middle->color = BLACK;
+	big->color = RED;
+	small->color = RED;
+}
+
+Node* BlackRedTree::adjustColor(Node* p)
+{
+	while (p != pRoot)
+	{
+		if (p->parent->color == BLACK)
+			break;	
+
+		Node* parent = p->parent;
+		Node* grand = parent->parent;
+		Node* uncle = grand->left == parent ? grand->right : grand->left;
+
+		if (uncle && uncle->color == RED)
+		{
+			parent->color = BLACK;
+			uncle->color = BLACK;
+			grand->color = RED;
+			p = parent->parent;
+		}
+
+		if (uncle == nullptr || uncle->color == BLACK)
+		{
+			if (p == parent->left)
 			{
-				parent->color = BLACK;
-				parent->parent->color = RED;
-				rl_rotate(parent->parent);
+				if (parent == grand->left)
+				{
+					case2_adjust(grand, TYPE_LL);
+				}
+				else if (parent == grand->right)
+				{
+					case2_adjust(grand, TYPE_LR);
+				}
 			}
-			else if (p == parent->right && parent->parent->left == parent)
+			else if (p == parent->right)
 			{
-				parent->color = BLACK;
-				parent->parent->color = RED;
-				lr_rotate(parent->parent);
+				if (parent == grand->right)
+				{
+					case2_adjust(grand, TYPE_RR);
+				}
+				else if (parent == grand->left)
+				{
+					case2_adjust(grand, TYPE_RL);
+				}
 			}
 
 			break;
@@ -195,9 +293,24 @@ void BlackRedTree::printInOrder(Node* p, int height, string to, int len)
 		return;
 
 	printInOrder(p->right, height + 1, "v", len);
+
+	string keyValue;
+	if (RED == p->color) 
+	{
+		keyValue.append("[");
+		keyValue.append(std::to_string(p->key).c_str());
+		keyValue.append("]");
+	}
+	else
+	{
+		keyValue.append("(");
+		keyValue.append(std::to_string(p->key).c_str());
+		keyValue.append(")");
+	}
+
 	string val;
 	val.append(to);
-	val.append(std::to_string(p->key).c_str());
+	val.append(keyValue);
 	val.append(to);
 
 	int lenM = val.length();
