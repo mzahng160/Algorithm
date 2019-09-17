@@ -58,7 +58,7 @@ private:
 	string getSpace(int num);
 
 	Node* case1_adjust(Node* p);
-	Node* case2_adjust(Node* p, unbalance_type t);
+	void case2_adjust(Node* p, unbalance_type t);
 };
 
 void BlackRedTree::insert(int key)
@@ -144,7 +144,7 @@ Node* BlackRedTree::case1_adjust(Node* p)
 
 	return grand;
 }
-Node* BlackRedTree::case2_adjust(Node* p, unbalance_type t)
+void BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 {
 	Node* big;
 	Node* middle;
@@ -172,7 +172,7 @@ Node* BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 			small = big->left;
 			middle = small->right;
 
-			middle->right = small->left;
+			small->right = middle->left;
 			big->left = middle->right;
 			if (nullptr != middle->left)
 				middle->left->parent = small;
@@ -221,7 +221,7 @@ Node* BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 		pRoot = middle;
 	else if (p->parent->left == p)
 		p->parent->left = middle;
-	else if (p->parent->right = p)
+	else if (p->parent->right == p)
 		p->parent->right = middle;
 
 	if (p->parent != nullptr)
@@ -251,7 +251,8 @@ Node* BlackRedTree::adjustColor(Node* p)
 			parent->color = BLACK;
 			uncle->color = BLACK;
 			grand->color = RED;
-			p = parent->parent;
+			p = grand;
+			continue;
 		}
 
 		if (uncle == nullptr || uncle->color == BLACK)
@@ -263,8 +264,8 @@ Node* BlackRedTree::adjustColor(Node* p)
 					case2_adjust(grand, TYPE_LL);
 				}
 				else if (parent == grand->right)
-				{
-					case2_adjust(grand, TYPE_LR);
+				{					
+					case2_adjust(grand, TYPE_RL);
 				}
 			}
 			else if (p == parent->right)
@@ -275,7 +276,7 @@ Node* BlackRedTree::adjustColor(Node* p)
 				}
 				else if (parent == grand->left)
 				{
-					case2_adjust(grand, TYPE_RL);
+					case2_adjust(grand, TYPE_LR);
 				}
 			}
 
@@ -297,15 +298,15 @@ void BlackRedTree::printInOrder(Node* p, int height, string to, int len)
 	string keyValue;
 	if (RED == p->color) 
 	{
-		keyValue.append("[");
+		keyValue.append("\033[41;34m");
 		keyValue.append(std::to_string(p->key).c_str());
-		keyValue.append("]");
+		keyValue.append("\033[0m");
 	}
 	else
 	{
-		keyValue.append("(");
+		keyValue.append("\033[46;30m");
 		keyValue.append(std::to_string(p->key).c_str());
-		keyValue.append(")");
+		keyValue.append("\033[0m");
 	}
 
 	string val;

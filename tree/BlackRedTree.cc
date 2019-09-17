@@ -34,7 +34,7 @@ enum unbalance_type get_unbalance_type(NodePtr p, int val)
 int main()
 {
 //	std::vector<int> intVec{ 3,2,1,4,5,6,7,16,15,14,13,12,11,10,8,9 };
-	std::vector<int> intVec{ 12,1,9};
+	std::vector<int> intVec{ 12,1,9,2,0,11,7,19,4,15,18,5,14,13,10,16,6,3,8,17};
 
 	BlackRedTree rbTree;
 
