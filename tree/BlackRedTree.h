@@ -54,11 +54,16 @@ private:
 	Node* rr_rotate(Node* p);
 	Node* rl_rotate(Node* p);
 
+	Node* find(int key);
+	Node* findNode(int key, Node* p);
+
 	void printInOrder(Node* p, int height, string to, int len);
 	string getSpace(int num);
 
 	Node* case1_adjust(Node* p);
 	void case2_adjust(Node* p, unbalance_type t);
+
+	void deleteNode(int key);
 };
 
 void BlackRedTree::insert(int key)
@@ -130,6 +135,24 @@ Node* BlackRedTree::rl_rotate(Node* p)
 	Node* k = p->right;
 	p->right = ll_rotate(k);
 	return rr_rotate(p);
+}
+
+Node* BlackRedTree::find(int key)
+{
+	return findNode(key, pRoot);
+}
+
+Node* BlackRedTree::findNode(int key, Node* p)
+{
+	if (p == nullptr)
+		return p;
+
+	if (key < p->key)
+		find_real(key, p->left);
+	else if (key > p->key)
+		find_real(key, p->right);
+	else
+		return p;
 }
 
 Node* BlackRedTree::case1_adjust(Node* p)
@@ -338,6 +361,53 @@ string BlackRedTree::getSpace(int num)
 		buf.append(" ");
 	}
 	return buf;
+}
+
+void BlackRedTree::deleteNode(int key)
+{
+	Node* node = find(key);
+	if (node == nullptr)
+		return;
+
+	int tag = 0;
+	while (tag != 2)
+	{
+		if (nullptr == node->left)
+		{
+			if (nullptr == no de->right)
+			{
+				if (RED == node->color)
+					deleteRedLeaf();
+				else
+					deleteBlack();
+				break;
+			}
+			else
+			{
+				deleteBlackOneSonNode();
+				break;
+			}
+		}
+		else if(nullptr == node->right)
+		{
+			deleteBlackOneSonNode();
+			break;
+		}
+		else
+		{
+			Node* successor = node->right;
+			while (successor->right!=nullptr)
+			{
+				successor = successor->right;
+			}
+			int tmp = node->key;
+			node->key = successor->key;
+			successor->key = tmp;
+
+			node = successor;
+			tag++;
+		}
+	}
 }
 
 #endif // !BLACK_RED_TREE_H
