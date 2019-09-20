@@ -43,6 +43,7 @@ public:
 
 	void insert(int key);
 	void printTree_2();
+	void deleteNode(int key);
 
 private:
 	Node* pRoot;
@@ -63,7 +64,11 @@ private:
 	Node* case1_adjust(Node* p);
 	void case2_adjust(Node* p, unbalance_type t);
 
-	void deleteNode(int key);
+	void deleteNode(Node* p);
+	void deleteRedLeaf(Node* p);
+	void deleteBlackLeaf(Node* p);
+	void rbDeleteRoatae(Node* p, unbalance_type type);
+	void deleteBlackOneSonNode(Node* p);
 };
 
 void BlackRedTree::insert(int key)
@@ -363,6 +368,169 @@ string BlackRedTree::getSpace(int num)
 	return buf;
 }
 
+void BlackRedTree::deleteNode(Node* p)
+{
+	Node* parent = p->parent;
+	if (p == nullptr)	//pRoot
+	{
+		delete pRoot;
+		return;
+	}
+
+	if (p == parent->left)
+		parent->left = nullptr;
+	if (p == parent->right)
+		parent->right = nullptr;
+	delete p;	
+}
+
+void BlackRedTree::deleteRedLeaf(Node* p)
+{
+	deleteNode(p);
+}
+
+void BlackRedTree::rbDeleteRoatae(Node* p, unbalance_type type)
+{
+	Node* parent = p;
+	Node* middle;
+
+	switch (type)
+	{
+	case TYPE_LL:
+		{
+			middle = p->left;
+
+			p->left = middle->right;
+			if (middle->right != nullptr)
+				middle->right->parent = p;
+
+			middle->right = p;
+		}
+		break;
+	case TYPE_LR:
+		break;
+	case TYPE_RL:
+		break;
+	case TYPE_RR:
+		{
+			middle = p->right;
+
+			p->right = middle->left;
+			if (middle->left != nullptr)
+				middle->left->parent = p;
+
+			middle->left = p;	
+		}
+		break;
+	default:
+		break;
+	}
+	if (parent->parent == nullptr)
+		pRoot = middle;
+	else if(parent = parent->parent->left)
+		parent->parent->left = middle;
+	else if (parent = parent->parent->right)
+		parent->parent->right = middle;
+
+	middle->parent = parent->parent;
+	p->parent = middle;
+}
+
+void BlackRedTree::deleteBlackLeaf(Node* p)
+{
+	Node* begin = p;
+	while (begin != pRoot)
+	{
+		Node* parent = p->parent;
+		Node* brohter = parent->right;
+
+		if (brohter && RED == brohter->color)
+		{
+			p->color = RED;
+			brohter->color = BLACK;
+
+			if (p == parent->left)
+			{
+				rbDeleteRoatae(parent, TYPE_RR);
+				continue;
+			}
+			else
+			{
+				rbDeleteRoatae(parent, TYPE_LL);
+				continue;
+			}
+		}
+		else
+		{
+			Node* bl = brohter->left->color;
+			Node* br = brohter->right->color;
+			if (bl->color == BLACK && br->color == BLACK)
+			{
+				deleteNode(p);
+				brohter->color = BLACK;
+				begin = parent;
+				continue;
+			}
+
+			else if (brother == parent->left && bl->color == RED)
+			{
+				brohter->parent->color;
+				parent->color = BLACK;
+				bl->color = BLACK;
+
+				rbDeleteRoatae(parent, TYPE_LL);
+
+				deleteNode(p);
+			}
+			else if	(brother == parent->right && br->color == RED)
+			{
+				brohter->parent->color;
+				parent->color = BLACK;
+				br->color = BLACK;
+
+				rbDeleteRoatae(parent, TYPE_RR);
+
+				deleteNode(p);
+			}
+			else if (brother == parent->right && bl->color == RED)
+			{
+				rbDeleteRoatae(brother, TYPE_LL);
+				brohter->color = RED;
+				bl->color = BLACK;
+				begin = p;
+				continue;
+			}
+			else if(brother == parent->left && br->color == RED)
+			{
+				rbDeleteRoatae(brother, TYPE_RR);
+				brohter->color = RED;
+				bl->color = BLACK;
+				begin = p;
+				continue;
+			}
+		}		
+	}
+}
+
+void BlackRedTree::deleteBlackOneSonNode(Node* p)
+{
+	Node* pl = p->left;
+	Node* pr = p->right;
+
+	if (pl && RED == pl->color)
+	{
+		p->key = pl->key;
+		p->left = nullptr;
+		deleteNode(pl);
+	}
+	if (pr && RED == pr->color)
+	{
+		p->key = pr->key;
+		p->right = nullptr;
+		deleteNode(pr);
+	}
+}
+
 void BlackRedTree::deleteNode(int key)
 {
 	Node* node = find(key);
@@ -374,12 +542,12 @@ void BlackRedTree::deleteNode(int key)
 	{
 		if (nullptr == node->left)
 		{
-			if (nullptr == no de->right)
+			if (nullptr == node->right)
 			{
 				if (RED == node->color)
-					deleteRedLeaf();
+					deleteRedLeaf(node);
 				else
-					deleteBlack();
+					deleteBlackLeaf(node);
 				break;
 			}
 			else
