@@ -45,6 +45,8 @@ int main()
 
 	for (auto i : intVec)
 	{
+		if (i == 16)
+			cout << "16" << endl;
 		rbTree.deleteNode(i);
 		rbTree.printTree_2();
 	}		

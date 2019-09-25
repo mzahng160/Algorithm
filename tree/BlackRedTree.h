@@ -218,7 +218,7 @@ void BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 			big->left = middle->right;
 			if (nullptr != middle->left)
 				middle->left->parent = small;
-			if (nullptr != middle->left)
+			if (nullptr != middle->right)
 				middle->right->parent = big;
 			
 			middle->left = small;
@@ -236,7 +236,7 @@ void BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 
 			if (nullptr != middle->left)
 				middle->left->parent = small;
-			if (nullptr != middle->left)
+			if (nullptr != middle->right)
 				middle->right->parent = big;
 
 			middle->left = small;
@@ -263,7 +263,11 @@ void BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 		return;
 
 	if (p->parent == nullptr)
+	{
 		pRoot = middle;
+		middle->parent = nullptr;
+	}
+		
 	else if (p->parent->left == p)
 		p->parent->left = middle;
 	else if (p->parent->right == p)
@@ -443,19 +447,19 @@ void BlackRedTree::deleteBlackLeaf(Node*& p)
 	Node* begin = p;
 	while (begin != pRoot)
 	{
-		Node* parent = p->parent;
+		Node* parent = begin->parent;
 		Node* brother = nullptr;
-		if (p == parent->left)
+		if (begin == parent->left)
 			brother = parent->right;
 		else 
 			brother = parent->left;
 
 		if (brother && RED == brother->color)
 		{
-			p->color = RED;
+			begin->color = RED;
 			brother->color = BLACK;
 
-			if (p == parent->left)
+			if (begin == parent->left)
 			{
 				rbDeleteRoatae(parent, TYPE_RR);
 				continue;
@@ -489,8 +493,6 @@ void BlackRedTree::deleteBlackLeaf(Node*& p)
 					bl->color = BLACK;
 
 					rbDeleteRoatae(brother, TYPE_LL);
-
-					begin = p;
 					continue;
 				}
 			}
@@ -511,9 +513,7 @@ void BlackRedTree::deleteBlackLeaf(Node*& p)
 					brother->color = RED;
 					br->color = BLACK;
 
-					rbDeleteRoatae(brother, TYPE_RR);
-
-					begin = p;
+					rbDeleteRoatae(brother, TYPE_RR);				
 					continue;
 				}
 			}
