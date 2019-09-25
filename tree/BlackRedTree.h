@@ -33,6 +33,20 @@ public:
 		color = RED;
 		left = right = parent = nullptr;
 	}
+
+	~Node()
+	{
+		Node* parent = this->parent;
+		if (parent != nullptr)	//not pRoot
+		{
+			if (this == parent->left)
+				parent->left = nullptr;
+			if (this == parent->right)
+				parent->right = nullptr;			
+		}
+		key = -1;
+		left = right = parent = nullptr;
+	}
 };
 
 class BlackRedTree
@@ -56,6 +70,7 @@ private:
 	Node* rl_rotate(Node* p);
 
 	Node* find(int key);
+
 	Node* findNode(int key, Node* p);
 
 	void printInOrder(Node* p, int height, string to, int len);
@@ -64,11 +79,10 @@ private:
 	Node* case1_adjust(Node* p);
 	void case2_adjust(Node* p, unbalance_type t);
 
-	void deleteNode(Node* p);
-	void deleteRedLeaf(Node* p);
-	void deleteBlackLeaf(Node* p);
-	void rbDeleteRoatae(Node* p, unbalance_type type);
-	void deleteBlackOneSonNode(Node* p);
+	void deleteRedLeaf(Node*& p);
+	void deleteBlackLeaf(Node*& p);
+	void rbDeleteRoatae(Node*& p, unbalance_type type);
+	void deleteBlackOneSonNode(Node*& p);
 };
 
 void BlackRedTree::insert(int key)
@@ -153,9 +167,9 @@ Node* BlackRedTree::findNode(int key, Node* p)
 		return p;
 
 	if (key < p->key)
-		find_real(key, p->left);
+		findNode(key, p->left);
 	else if (key > p->key)
-		find_real(key, p->right);
+		findNode(key, p->right);
 	else
 		return p;
 }
@@ -174,9 +188,9 @@ Node* BlackRedTree::case1_adjust(Node* p)
 }
 void BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 {
-	Node* big;
-	Node* middle;
-	Node* small;
+	Node* big = nullptr;
+	Node* middle = nullptr;
+	Node* small = nullptr;;
 
 	switch (t)
 	{
@@ -245,6 +259,9 @@ void BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 			break;
 	}	
 
+	if (small == nullptr || middle == nullptr || big == nullptr)
+		return;
+
 	if (p->parent == nullptr)
 		pRoot = middle;
 	else if (p->parent->left == p)
@@ -255,7 +272,7 @@ void BlackRedTree::case2_adjust(Node* p, unbalance_type t)
 	if (p->parent != nullptr)
 		middle->parent = p->parent;
 
-	big->parent = middle;
+	big->parent = middle;	
 	small->parent = middle;
 
 	middle->color = BLACK;
@@ -368,28 +385,13 @@ string BlackRedTree::getSpace(int num)
 	return buf;
 }
 
-void BlackRedTree::deleteNode(Node* p)
+void BlackRedTree::deleteRedLeaf(Node*& p)
 {
-	Node* parent = p->parent;
-	if (p == nullptr)	//pRoot
-	{
-		delete pRoot;
-		return;
-	}
-
-	if (p == parent->left)
-		parent->left = nullptr;
-	if (p == parent->right)
-		parent->right = nullptr;
-	delete p;	
+	delete p;
+	p = nullptr;
 }
 
-void BlackRedTree::deleteRedLeaf(Node* p)
-{
-	deleteNode(p);
-}
-
-void BlackRedTree::rbDeleteRoatae(Node* p, unbalance_type type)
+void BlackRedTree::rbDeleteRoatae(Node*& p, unbalance_type type)
 {
 	Node* parent = p;
 	Node* middle;
@@ -427,27 +429,31 @@ void BlackRedTree::rbDeleteRoatae(Node* p, unbalance_type type)
 	}
 	if (parent->parent == nullptr)
 		pRoot = middle;
-	else if(parent = parent->parent->left)
+	else if(parent == parent->parent->left)
 		parent->parent->left = middle;
-	else if (parent = parent->parent->right)
+	else if (parent == parent->parent->right)
 		parent->parent->right = middle;
 
 	middle->parent = parent->parent;
 	p->parent = middle;
 }
 
-void BlackRedTree::deleteBlackLeaf(Node* p)
+void BlackRedTree::deleteBlackLeaf(Node*& p)
 {
 	Node* begin = p;
 	while (begin != pRoot)
 	{
 		Node* parent = p->parent;
-		Node* brohter = parent->right;
+		Node* brother = nullptr;
+		if (p == parent->left)
+			brother = parent->right;
+		else 
+			brother = parent->left;
 
-		if (brohter && RED == brohter->color)
+		if (brother && RED == brother->color)
 		{
 			p->color = RED;
-			brohter->color = BLACK;
+			brother->color = BLACK;
 
 			if (p == parent->left)
 			{
@@ -460,59 +466,78 @@ void BlackRedTree::deleteBlackLeaf(Node* p)
 				continue;
 			}
 		}
-		else
-		{
-			Node* bl = brohter->left->color;
-			Node* br = brohter->right->color;
-			if (bl->color == BLACK && br->color == BLACK)
+		else if (brother && BLACK == brother->color)
+		{	
+			Node* bl = brother->left;
+			Node* br = brother->right;
+
+			if (brother == parent->right)
 			{
-				deleteNode(p);
-				brohter->color = BLACK;
+				if (br&& br->color == RED)
+				{
+					color tmpColor = parent->color;
+					brother->color = tmpColor;
+					parent->color = BLACK;
+					br->color = BLACK;
+
+					rbDeleteRoatae(parent, TYPE_RR);
+					break;
+				}
+				else if (bl && bl->color == RED)
+				{
+					brother->color = RED;
+					bl->color = BLACK;
+
+					rbDeleteRoatae(brother, TYPE_LL);
+
+					begin = p;
+					continue;
+				}
+			}
+			else if (brother == parent->left)
+			{
+				if (bl && bl->color == RED)
+				{
+					color tmpColor = parent->color;
+					brother->color = tmpColor;
+					parent->color = BLACK;
+					bl->color = BLACK;
+
+					rbDeleteRoatae(parent, TYPE_LL);
+					break;
+				}
+				else if (br && br->color == RED)
+				{
+					brother->color = RED;
+					br->color = BLACK;
+
+					rbDeleteRoatae(brother, TYPE_RR);
+
+					begin = p;
+					continue;
+				}
+			}
+
+			if (RED == parent->color)
+			{
+				brother->color = RED;
+				parent->color = BLACK;
+				break;
+			}
+			else
+			{
+				brother->color = RED;
 				begin = parent;
-				continue;
-			}
-
-			else if (brother == parent->left && bl->color == RED)
-			{
-				brohter->parent->color;
-				parent->color = BLACK;
-				bl->color = BLACK;
-
-				rbDeleteRoatae(parent, TYPE_LL);
-
-				deleteNode(p);
-			}
-			else if	(brother == parent->right && br->color == RED)
-			{
-				brohter->parent->color;
-				parent->color = BLACK;
-				br->color = BLACK;
-
-				rbDeleteRoatae(parent, TYPE_RR);
-
-				deleteNode(p);
-			}
-			else if (brother == parent->right && bl->color == RED)
-			{
-				rbDeleteRoatae(brother, TYPE_LL);
-				brohter->color = RED;
-				bl->color = BLACK;
-				begin = p;
-				continue;
-			}
-			else if(brother == parent->left && br->color == RED)
-			{
-				rbDeleteRoatae(brother, TYPE_RR);
-				brohter->color = RED;
-				bl->color = BLACK;
-				begin = p;
 				continue;
 			}
 		}		
 	}
+
+	delete p;
+	p = nullptr;
 }
 
-void BlackRedTree::deleteBlackOneSonNode(Node* p)
+void BlackRedTree::deleteBlackOneSonNode(Node*& p)
 {
 	Node* pl = p->left;
 	Node* pr = p->right;
@@ -521,13 +546,15 @@ void BlackRedTree::deleteBlackOneSonNode(Node* p)
 	{
 		p->key = pl->key;
 		p->left = nullptr;
-		deleteNode(pl);
+		delete pl;
+		pl = nullptr;
 	}
 	if (pr && RED == pr->color)
 	{
 		p->key = pr->key;
 		p->right = nullptr;
-		deleteNode(pr);
+		delete pr;
+		pr = nullptr;
 	}
 }
 
@@ -552,21 +579,21 @@ void BlackRedTree::deleteNode(int key)
 			}
 			else
 			{
-				deleteBlackOneSonNode();
+				deleteBlackOneSonNode(node);
 				break;
 			}
 		}
 		else if(nullptr == node->right)
 		{
-			deleteBlackOneSonNode();
+			deleteBlackOneSonNode(node);
 			break;
 		}
 		else
 		{
 			Node* successor = node->right;
-			while (successor->right!=nullptr)
+			while (successor->left != nullptr)
 			{
-				successor = successor->right;
+				successor = successor->left;
 			}
 			int tmp = node->key;
 			node->key = successor->key;

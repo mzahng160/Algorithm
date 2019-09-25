@@ -42,5 +42,11 @@ int main()
 		rbTree.insert(i);
 
 	rbTree.printTree_2();
+
+	for (auto i : intVec)
+	{
+		rbTree.deleteNode(i);
+		rbTree.printTree_2();
+	}		
 	return 0;
 }
