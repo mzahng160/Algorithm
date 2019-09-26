@@ -166,12 +166,16 @@ Node* BlackRedTree::findNode(int key, Node* p)
 	if (p == nullptr)
 		return p;
 
+	Node* tmp = nullptr;
+
 	if (key < p->key)
-		findNode(key, p->left);
+		tmp = findNode(key, p->left);
 	else if (key > p->key)
-		findNode(key, p->right);
+		tmp = findNode(key, p->right);
 	else
-		return p;
+		tmp = p;
+
+	return tmp;
 }
 
 Node* BlackRedTree::case1_adjust(Node* p)
@@ -482,6 +486,7 @@ void BlackRedTree::deleteBlackLeaf(Node*& p)
 					color tmpColor = parent->color;
 					brother->color = tmpColor;
 					parent->color = BLACK;
+
 					br->color = BLACK;
 
 					rbDeleteRoatae(parent, TYPE_RR);
@@ -502,7 +507,9 @@ void BlackRedTree::deleteBlackLeaf(Node*& p)
 				{
 					color tmpColor = parent->color;
 					parent->color = brother->color;
-					brother->color = tmpColor;					
+					brother->color = tmpColor;
+
+					bl->color = BLACK;
 
 					rbDeleteRoatae(parent, TYPE_LL);
 					break;
@@ -530,6 +537,11 @@ void BlackRedTree::deleteBlackLeaf(Node*& p)
 				continue;
 			}
 		}		
+	}
+
+	if (p == pRoot)
+	{
+		pRoot = nullptr;
 	}
 
 	delete p;
