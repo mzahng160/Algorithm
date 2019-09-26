@@ -456,7 +456,7 @@ void BlackRedTree::deleteBlackLeaf(Node*& p)
 
 		if (brother && RED == brother->color)
 		{
-			begin->color = RED;
+			begin->parent->color = RED;
 			brother->color = BLACK;
 
 			if (begin == parent->left)
@@ -501,9 +501,8 @@ void BlackRedTree::deleteBlackLeaf(Node*& p)
 				if (bl && bl->color == RED)
 				{
 					color tmpColor = parent->color;
-					brother->color = tmpColor;
-					parent->color = BLACK;
-					bl->color = BLACK;
+					parent->color = brother->color;
+					brother->color = tmpColor;					
 
 					rbDeleteRoatae(parent, TYPE_LL);
 					break;
